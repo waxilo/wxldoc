@@ -1,6 +1,7 @@
 ## ArrayList详解
 
-[全面解析ArrayList，超详细！_设计并实现动态数组,也即是列表(arraylist),底层数据结构为数组。应实现如下功能:-CSDN博客](https://blog.csdn.net/rocling/article/details/109580371)
+[全面解析ArrayList，超详细](https://www.cnblogs.com/codingkf/p/19079098)
+
 
 ## Synchronized锁详解
 

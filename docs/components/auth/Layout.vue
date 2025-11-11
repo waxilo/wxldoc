@@ -22,27 +22,82 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import DefaultTheme from 'vitepress/theme'
-import { getAuthenticated, setAuthenticated, checkPassword as authCheckPassword } from './auth.js'
+import { getAuthenticated, setAuthenticated, checkPassword as authCheckPassword, updateActivityTime } from './auth.js'
 
 const Layout = DefaultTheme.Layout
 const isAuthenticated = ref(false)
 const password = ref('')
 const errorMessage = ref('')
 
+// 用户活动检测的定时器
+let activityTimer = null
+
 onMounted(() => {
   isAuthenticated.value = getAuthenticated()
+  
+  // 如果已认证，设置用户活动检测
+  if (isAuthenticated.value) {
+    setupActivityMonitoring()
+  }
+})
+
+onUnmounted(() => {
+  // 清理定时器
+  if (activityTimer) {
+    clearInterval(activityTimer)
+    activityTimer = null
+  }
 })
 
 const checkPassword = () => {
   if (authCheckPassword(password.value)) {
     isAuthenticated.value = true
     errorMessage.value = ''
+    // 认证成功后设置活动监控
+    setupActivityMonitoring()
   } else {
     errorMessage.value = '密码错误，请重新输入'
     password.value = ''
   }
+}
+
+// 设置用户活动监控
+const setupActivityMonitoring = () => {
+  // 初始更新活动时间
+  updateActivityTime()
+  
+  // 清除现有定时器
+  if (activityTimer) {
+    clearInterval(activityTimer)
+  }
+  
+  // 每30秒检查一次用户活动状态
+  activityTimer = setInterval(() => {
+    const currentAuthStatus = getAuthenticated()
+    if (!currentAuthStatus) {
+      // 会话已过期，需要重新登录
+      isAuthenticated.value = false
+      if (activityTimer) {
+        clearInterval(activityTimer)
+        activityTimer = null
+      }
+    }
+  }, 30000)
+  
+  // 监听用户活动事件
+  const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
+  activityEvents.forEach(event => {
+    document.addEventListener(event, updateActivityTime, { passive: true })
+  })
+  
+  // 在组件卸载时清理事件监听器
+  onUnmounted(() => {
+    activityEvents.forEach(event => {
+      document.removeEventListener(event, updateActivityTime)
+    })
+  })
 }
 </script>
 

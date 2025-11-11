@@ -18,15 +18,17 @@
   </div>
   
   <!-- 认证后的正常布局 -->
-  <Layout v-else />
+  <DefaultThemeLayout v-else>
+    <slot />
+  </DefaultThemeLayout>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, h } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import { getAuthenticated, setAuthenticated, checkPassword as authCheckPassword, updateActivityTime } from './auth.js'
 
-const Layout = DefaultTheme.Layout
+const DefaultThemeLayout = DefaultTheme.Layout
 const isAuthenticated = ref(false)
 const password = ref('')
 const errorMessage = ref('')

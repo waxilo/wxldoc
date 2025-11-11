@@ -1,6 +1,20 @@
-## ArrayList详解
+## ArrayList知识点
+
+### 参考文档
 
 [全面解析ArrayList，超详细](https://www.cnblogs.com/codingkf/p/19079098)
+
+### 扩容机制
+
+```java
+List<Object> list = new ArrayList<>();
+```
+
+执行以上代码，实际是创建一个容量为 0 的空数组。
+
+当执行第一次新增时，实际大小为 1，大于容量，触发 grow 扩容。
+
+grow 是调用 Arrays.copyOf 创建一个 1.5 倍容量的新数组，并覆盖对象引用。
 
 
 ## Synchronized锁详解

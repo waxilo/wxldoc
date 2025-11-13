@@ -10,7 +10,7 @@ export default {
     // 目录
     outline: {
       level: [2, 3],
-      label: "本页目录",
+      label: "目录",
     },
 
     // 导航栏

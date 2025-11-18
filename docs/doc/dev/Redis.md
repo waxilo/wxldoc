@@ -221,3 +221,9 @@ intset使用二分查找算法来定位元素，时间复杂度为O(log n)。查
 **结构设计**：Quicklist是一个双向链表，但链表的每个节点都是一个ziplist（或在新版本中是listpack）。这样可以视为一个"由多个小块ziplist连接而成的链表"
 
 **设计权衡**：它避免了单纯链表带来的大量内存碎片和指针开销，也避免了大型ziplist在修改时可能需要的整体重分配。通过控制每个ziplist节点的大小，取得了内存局部性和插入性能之间的良好平衡
+
+# 分布式ID实现
+
+[美团Leaf](https://tech.meituan.com/2017/04/21/mt-leaf.html)
+
+[百度uid](https://cloud.tencent.com/developer/article/1680001)

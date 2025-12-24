@@ -46,7 +46,7 @@ export default {
         {
           items: [
             { text: "概述", link: "/doc/dev/" },
-            { text: "网络安全", link: "/doc/dev/网络安全/网络安全" },
+            { text: "网络安全", link: "/doc/dev/网络安全" },
             { text: "Java", link: "/doc/dev/Java" },
             { text: "MySQL", link: "/doc/dev/MySQL" },
             { text: "Redis", link: "/doc/dev/Redis" },

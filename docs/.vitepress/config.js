@@ -16,7 +16,7 @@ export default {
     // 导航栏
     nav: [
       { text: "首页", link: "/" },
-      { text: "面经", link: "/doc/dev/" },
+      { text: "面试题", link: "/doc/dev/" },
     ],
 
     // 社交链接
@@ -24,36 +24,64 @@ export default {
       { icon: "github", link: "https://github.com/waxilo/vite-press-doc" },
     ],
 
-    // 侧边栏 - 首页显示other目录的侧边栏
+    // 侧边栏 - 根据实际文件结构配置
     sidebar: {
-      "/": [
+      '/': [  // 首页的侧边栏
         {
+          text: '工具文档',
+          collapsible: true,
           items: [
-            { text: "概述", link: "/" },
-            { text: "VPN", link: "/doc/index/VPN" },
-            {
-              text: "一键激活 JetBrains 全家桶",
-              link: "/doc/index/一键激活 JetBrains 全家桶",
-            },
-            {
-              text: "Mac Idea 最新版激活",
-              link: "/doc/index/Mac Idea 最新版激活",
-            },
-          ],
-        },
+            { text: 'JetBrains激活', link: '/doc/other/一键激活 JetBrains 全家桶' },
+            { text: 'Mac Idea激活', link: '/doc/other/Mac Idea 最新版激活' },
+            { text: 'VPN配置', link: '/doc/other/VPN' },
+          ]
+        }
       ],
-      "/doc/dev": [
+      '/doc/dev/': [  // 开发文档的侧边栏
         {
+          text: 'Java',
+          collapsible: true,
           items: [
-            { text: "概述", link: "/doc/dev/" },
-            { text: "网络安全", link: "/doc/dev/网络安全" },
-            { text: "Java", link: "/doc/dev/Java" },
-            { text: "MySQL", link: "/doc/dev/MySQL" },
-            { text: "Redis", link: "/doc/dev/Redis" },
-            { text: "Spring", link: "/doc/dev/Spring" },
-          ],
+            { text: '基础', link: '/doc/dev/Java/index' },
+            { text: '集合框架', link: '/doc/dev/Java/集合' },
+            { text: '线程池', link: '/doc/dev/Java/线程池' },
+            { text: 'JVM', link: '/doc/dev/Java/JVM' },
+          ]
         },
-      ],
+        {
+          text: 'MySQL',
+          collapsible: true,
+          items: [
+            { text: '基础', link: '/doc/dev/MySQL/index' },
+            { text: '事务', link: '/doc/dev/MySQL/事务' },
+            { text: '锁机制', link: '/doc/dev/MySQL/锁' },
+            { text: 'MVCC', link: '/doc/dev/MySQL/MVCC' },
+          ]
+        },
+        {
+          text: 'Redis',
+          collapsible: true,
+          items: [
+            { text: '基础', link: '/doc/dev/Redis/index' },
+            { text: '过期策略', link: '/doc/dev/Redis/过期策略' },
+            { text: '淘汰策略', link: '/doc/dev/Redis/淘汰策略' },
+          ]
+        },
+        {
+          text: 'Spring',
+          collapsible: true,
+          items: [
+            { text: '基础', link: '/doc/dev/Spring/index' },
+          ]
+        },
+        {
+          text: '网络安全',
+          collapsible: true,
+          items: [
+            { text: '网络安全总览', link: '/doc/dev/网络安全/index' },
+          ]
+        }
+      ]
     },
 
     // 隐藏底部的上一页下一页导航

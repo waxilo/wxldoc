@@ -26,9 +26,10 @@ export default {
 
     // 侧边栏 - 根据实际文件结构配置
     sidebar: {
-      '/': [  // 首页的侧边栏
+      "/": [
+        // 首页的侧边栏
         {
-          text: '工具文档',
+          text: "工具文档",
           collapsible: true,
           items: [
             { text: "概述", link: "/" },
@@ -46,19 +47,54 @@ export default {
       ],
       "/doc/dev": [
         {
-          items: [
-            { text: '基础', link: '/doc/dev/Spring/index' },
-          ]
-        },
-        {
-          text: '网络基础',
+          text: "Java",
           collapsible: true,
           collapsed: true,
+
           items: [
-            { text: '网络基础', link: '/doc/dev/网络基础/index' },
-          ]
-        }
-      ]
+            { text: "基础", link: "/doc/dev/Java/index" },
+            { text: "集合框架", link: "/doc/dev/Java/集合" },
+            { text: "线程池", link: "/doc/dev/Java/线程池" },
+            { text: "JVM", link: "/doc/dev/Java/JVM" },
+          ],
+        },
+        {
+          text: "MySQL",
+          collapsible: true,
+          collapsed: true,
+
+          items: [
+            { text: "基础", link: "/doc/dev/MySQL/index" },
+            { text: "事务", link: "/doc/dev/MySQL/事务" },
+            { text: "锁机制", link: "/doc/dev/MySQL/锁" },
+            { text: "MVCC", link: "/doc/dev/MySQL/MVCC" },
+          ],
+        },
+        {
+          text: "Redis",
+          collapsible: true,
+          collapsed: true,
+
+          items: [
+            { text: "基础", link: "/doc/dev/Redis/index" },
+            { text: "过期策略", link: "/doc/dev/Redis/过期策略" },
+            { text: "淘汰策略", link: "/doc/dev/Redis/淘汰策略" },
+          ],
+        },
+        {
+          text: "Spring",
+          collapsible: true,
+          collapsed: true,
+
+          items: [{ text: "基础", link: "/doc/dev/Spring/index" }],
+        },
+        {
+          text: "网络基础",
+          collapsible: true,
+          collapsed: true,
+          items: [{ text: "网络基础", link: "/doc/dev/网络基础/index" }],
+        },
+      ],
     },
 
     // 隐藏底部的上一页下一页导航

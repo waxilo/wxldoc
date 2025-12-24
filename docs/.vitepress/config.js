@@ -52,7 +52,7 @@ export default {
           collapsed: true,
 
           items: [
-            { text: "集合框架", link: "/doc/dev/Java/集合" },
+            { text: "集合", link: "/doc/dev/Java/集合" },
             { text: "线程池", link: "/doc/dev/Java/线程池" },
             { text: "JVM", link: "/doc/dev/Java/JVM" },
           ],

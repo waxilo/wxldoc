@@ -33,14 +33,14 @@ export default {
           collapsible: true,
           items: [
             { text: "概述", link: "/" },
-            { text: "VPN", link: "/doc/index/VPN" },
+            { text: "VPN", link: "/doc/other/VPN" },
             {
               text: "一键激活 JetBrains 全家桶",
-              link: "/doc/index/一键激活 JetBrains 全家桶",
+              link: "/doc/other/一键激活 JetBrains 全家桶",
             },
             {
               text: "Mac Idea 最新版激活",
-              link: "/doc/index/Mac Idea 最新版激活",
+              link: "/doc/other/Mac Idea 最新版激活",
             },
           ],
         },
@@ -52,7 +52,6 @@ export default {
           collapsed: true,
 
           items: [
-            { text: "基础", link: "/doc/dev/Java/index" },
             { text: "集合框架", link: "/doc/dev/Java/集合" },
             { text: "线程池", link: "/doc/dev/Java/线程池" },
             { text: "JVM", link: "/doc/dev/Java/JVM" },
@@ -64,7 +63,8 @@ export default {
           collapsed: true,
 
           items: [
-            { text: "基础", link: "/doc/dev/MySQL/index" },
+            { text: "三大日志", link: "/doc/dev/MySQL/三大日志" },
+            { text: "索引", link: "/doc/dev/MySQL/索引" },
             { text: "事务", link: "/doc/dev/MySQL/事务" },
             { text: "锁机制", link: "/doc/dev/MySQL/锁" },
             { text: "MVCC", link: "/doc/dev/MySQL/MVCC" },

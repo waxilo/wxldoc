@@ -1,6 +1,6 @@
 export default {
-  title: "VitePress文档",
-  description: "使用VitePress构建的文档站点",
+  title: "Sloan's Doc",
+  description: "Sloan's Doc",
 
   // 重要：设置基础路径，应该与GitHub仓库名称一致
   // 例如，如果您的仓库名是 'vite-press-doc'，则设置为 '/vite-press-doc/'

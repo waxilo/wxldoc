@@ -109,7 +109,8 @@ jmap -histo [options] <pid>
 > ⚠️ 注意：执行 `jmap -histo` 会**触发一次 Full GC（仅限 `-histo`，不含 `-dump`）**，以确保统计的是“存活”对象。这会导致应用暂停（STW），**建议在业务低峰期使用**。
 
 ```
-num #instances #bytes class name ---------------------------------------------- 
+num #instances #bytes class name 
+---------------------------------------------- 
 1: 200000 16000000 java.lang.String 
 2: 150000 12000000 java.util.HashMap$Node 
 3: 50000 8000000 byte[] 

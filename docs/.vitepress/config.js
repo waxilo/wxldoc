@@ -15,8 +15,8 @@ export default {
 
     // 导航栏
     nav: [
-      { text: "面试题", link: "/doc/dev/" },
       { text: "其他", link: "/" },
+      { text: "面试题", link: "/doc/dev/" },
     ],
 
     // 社交链接

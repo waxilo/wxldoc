@@ -95,6 +95,12 @@ export default {
           collapsed: true,
           items: [{ text: "网络基础", link: "/doc/dev/网络基础/index" }],
         },
+        {
+          text: "场景题",
+          collapsible: true,
+          collapsed: true,
+          items: [{ text: "场景题", link: "/doc/dev/场景题/index" }],
+        }
       ],
     },
 

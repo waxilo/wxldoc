@@ -17,7 +17,6 @@
 | Java heap space            | 堆空间不足  | 内存泄露、对象优化、缓存设计优化、堆大小调整 |
 | Metaspace                  | 元空间溢出  | 动态生成类优化、元空间大小调整        |
 | GC overhead limit exceeded | GC效率低下 | 内存泄露、对象创建过速、大对象处理不当    |
-|                            |        |                        |
 ### DUMP文件获取
 
 JVM参数设置自动dump文件生成

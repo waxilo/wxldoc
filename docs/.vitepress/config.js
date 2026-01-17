@@ -76,7 +76,7 @@ export default {
           collapsed: true,
 
           items: [
-            { text: "基础", link: "/doc/dev/Redis/index" },
+            { text: "基本数据结构", link: "/doc/dev/Redis/index" },
             { text: "过期策略", link: "/doc/dev/Redis/过期策略" },
             { text: "淘汰策略", link: "/doc/dev/Redis/淘汰策略" },
             { text: "分布式方案", link: "/doc/dev/Redis/分布式方案" },

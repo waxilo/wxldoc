@@ -66,7 +66,9 @@ S0 S1 E O M CCS YGC YGCT FGC FGCT GCT
 | **YGCT** | Young GC 总耗时（秒）                | 所有 Young GC 累计耗时                                  |
 | **FGC**  | Full GC 总耗时（秒）                 | 所有 Full GC 累计耗时                                   |
 | **GCT**  | GC 总耗时（秒）                      | YGCT + FGCT                                       |
+
 ⚠️注意：不同 GC 算法（如 G1、ZGC、Shenandoah）的列名可能略有差异。例如 G1 中可能显示 `HU`（Humongous Used）等。
+
 #### 场景 1：判断是否内存泄漏
 
 - 观察 **O（Old Gen）** 列：

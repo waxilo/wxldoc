@@ -64,6 +64,7 @@ export default {
             { text: "事务", link: "/doc/dev/MySQL/事务" },
             { text: "锁机制", link: "/doc/dev/MySQL/锁" },
             { text: "MVCC", link: "/doc/dev/MySQL/MVCC" },
+            { text: "慢SQL优化", link: "/doc/dev/MySQL/慢SQL优化" },
           ],
         },
         {

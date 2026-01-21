@@ -38,10 +38,6 @@ export default {
               text: "一键激活 JetBrains 全家桶",
               link: "/doc/other/一键激活 JetBrains 全家桶",
             },
-            {
-              text: "Mac Idea 最新版激活",
-              link: "/doc/other/Mac Idea 最新版激活",
-            },
           ],
         },
       ],

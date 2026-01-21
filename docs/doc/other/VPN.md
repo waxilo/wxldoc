@@ -6,7 +6,7 @@
 
 核心推荐链接：
 
-[魔戒](https://mojie.cyou)
+[魔戒](https://mojie.co)
 
 [云溪](https://set.acrutes.cyou/s9s2c/)
 

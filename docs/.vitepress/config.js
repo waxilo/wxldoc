@@ -97,7 +97,8 @@ export default {
           text: "场景题",
           collapsible: true,
           collapsed: true,
-          items: [{ text: "场景题", link: "/doc/dev/场景题/index" }],
+          items: [{ text: "场景题", link: "/doc/dev/场景题/index" },
+          { text: "项目", link: "/doc/dev/场景题/项目" },],
         }
       ],
     },

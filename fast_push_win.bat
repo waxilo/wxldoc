@@ -2,24 +2,8 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
-:: 获取当前日期和时间（格式：YYYY-MM-DD HH:MM:SS）
-for /f "tokens=1-7 delims=/:. " %%a in ('wmic path win32_localtime get /format:list ^| findstr "="') do (
-    set "%%a=%%b"
-)
-
-:: 补零（确保月份、日期、小时等为两位数）
-set "MM=0!Month!"
-set "MM=!MM:～-2!"
-set "DD=0!Day!"
-set "DD=!DD:～-2!"
-set "HH=0!Hour!"
-set "HH=!HH:～-2!"
-set "Min=0!Minute!"
-set "Min=!Min:～-2!"
-set "Sec=0!Second!"
-set "Sec=!Sec:～-2!"
-
-set "DATETIME=!Year!-!MM!-!DD! !HH!:!Min!:!Sec!"
+:: 使用 PowerShell 获取标准格式的当前时间（推荐！）
+for /f "delims=" %%i in ('powershell -command "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"') do set "DATETIME=%%i"
 
 git add .
 git commit -m "!DATETIME!"

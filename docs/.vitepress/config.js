@@ -26,6 +26,10 @@ export default {
 
     // 侧边栏 - 根据实际文件结构配置
     sidebar: {
+
+      // 设置互斥展开模式
+      collapsible: 'unique',
+
       "/": [
         // 首页的侧边栏
         {

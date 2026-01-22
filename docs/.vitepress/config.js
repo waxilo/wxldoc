@@ -9,7 +9,7 @@ export default {
   themeConfig: {
     // 目录
     outline: {
-      level: [2, 3],
+      level: [2],
       label: "目录",
     },
 

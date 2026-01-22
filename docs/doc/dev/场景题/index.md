@@ -34,11 +34,68 @@ jmap -dump:file=heapdump.hprof <pid> // <pid> 是 Java 进程的进程 ID。
 
 ### 分析与定位
 
+拿到 `.hprof` 文件后，使用分析工具（推荐 **MAT** 或 **VisualVM**，Arthas 也是神器）进行分析
+
+
+## CPU高问题排查
+
+### 1. 定位Java进程
+
+1. **使用 `top` 命令：**  
+    在终端输入 `top`，查看实时的系统资源占用情况。
+2. **找到罪魁祸首：**  
+    按下 `P` 键（大写）按 CPU 使用率排序。找到 CPU 占用率异常高的 Java 进程，记下它的 **PID**（进程 ID）
+
+### 2. 定位进程内消耗 CPU 的线程
+
+1. **查看进程内线程：**  
+    使用命令 `top -Hp <PID>`。这会列出该 Java 进程下所有的线程。
+2. **找出高 CPU 线程：**  
+    同样按 `P` 排序，找到 CPU 占用最高的线程 ID（记为 **TID**），并记录下来
+
+### 3. 转换线程 ID 格式
+
+JVM 的线程栈信息中，线程 ID 是以 **十六进制** 表示的，而 `top` 命令显示的是十进制。
+
+- **执行转换：**  
+    使用命令 `printf "%x\n" <TID>` 将十进制线程 ID 转换为十六进制（例如 `12346` 转换后是 `303a`）
+
+### 4. 获取线程栈并定位代码
+
+1. **导出线程栈：**  
+    执行 `jstack <PID> > jstack.log`，将当前的线程堆栈信息保存到文件中。
+2. **搜索关键线程：**  
+    在文件中搜索刚才的十六进制线程 ID（如 `303a`）。
+3. **分析状态：**
+    - **RUNNABLE（运行中）：** 说明线程正在执行业务逻辑。查看堆栈信息，看它卡在哪个类、哪个方法、哪一行代码。
+    - **BLOCKED（阻塞中）：** 说明线程在等待锁，可能存在锁竞争问题
+
+### 常见原因与解决方案
+
+**根据线程栈的分析结果，通常有以下几种常见情况：
+
+- **死循环或高频计算：**
+    - **现象：** 线程状态为 `RUNNABLE`，堆栈显示在某个 `while` 循环或复杂计算方法中。
+    - **解决：** 检查循环退出条件，优化算法逻辑，或者在循环中加入 `Thread.sleep()` 防止空转。
+- **正则表达式回溯爆炸：**
+    - **现象：** 线程卡在 `java.util.regex.Pattern` 相关方法中。
+    - **原因：** 使用了有性能缺陷的正则表达式处理了超长字符串。
+    - **解决：** 优化正则表达式，或者改用字符串分割等简单匹配方式。
+- **频繁 Full GC（假性 CPU 高）：**
+    - **现象：** 线程栈里全是 `GC task thread`，或者 `jstat` 发现 GC 频率极高。
+    - **原因：** 内存不足导致 JVM 疯狂回收垃圾。
+    - **解决：** 这种情况通常伴随内存溢出风险，需要使用 `jstat -gcutil <PID>` 分析，排查内存泄漏或调整 JVM 参数。
+- **锁竞争激烈：**
+    - **现象：** 大量线程处于 `BLOCKED` 状态，都在等待同一个锁。
+    - **解决：** 优化锁粒度，减少同步代码块范围，或者使用无锁数据结构
+
+
 ## 常用的问题排查命令
 
 ### jstat -gcutil
 
 ```shell
+# 查看各区内存占用、GC情况
 jstat -gcutil <pid> [interval] [count]
 
 #示例 进程12345，每 2 秒打印一次，共打印 5 次 
@@ -99,6 +156,7 @@ S0 S1 E O M CCS YGC YGCT FGC FGCT GCT
 ### jmap -histo
 
 ```shell
+# 统计大对象
 jmap -histo [options] <pid>
 ```
 - `<pid>`：目标 Java 进程 ID（可通过 `jps` 获取）
@@ -124,3 +182,24 @@ num #instances #bytes class name
 | #instances | 该类的实例数量                    |
 | #bytes     | 这些实例总共占用的字节数（Shallow Size） |
 | class name | 类的全限定名                     |
+
+## 有没有排查过JVM问题
+
+首先通过 Pod 监控，发现服务在运行一段时间后周期性重启。  
+进一步查看监控指标，发现每次重启前 CPU 使用率显著升高，最终导致容器宕机。  
+经排查，宕机原因为 Kubernetes 主动终止（kill）了该 Pod，根本原因是 **CPU 资源耗尽导致健康检查接口（/health）无法在超时时间内返回**。
+
+在下一次故障发生时，我们立即介入现场排查：
+
+- 通过 `top` 定位到高 CPU 的 Java 进程 PID；
+- 通过 `top -Hp <PID>` 找到占用 CPU 最高的线程 TID；
+- 执行 `jstack <PID>` 导出线程堆栈，发现存在多个 **GC 工作线程（如 `G1 Young Generation`）处于 RUNNABLE 状态**；
+- 使用 `jstat -gcutil <PID>` 确认 **老年代使用率持续 >95%**，且 GC 频率异常升高，表明存在严重内存压力；
+- 随即执行 `jmap -dump:format=b,file=heap.hprof <PID>` 获取内存快照；
+- 将 dump 文件导入 MAT 分析，发现一个 **Retained Heap 极大的 `ConcurrentHashMap` 实例**；
+- 通过 **Path to GC Roots** 追踪引用链，确认该对象被 `ThreadLocal $ ThreadLocalMap` 中的 `Entry` 持有，且所属线程为线程池中的长期存活线程；
+
+**最终结论**：由于业务代码在使用 `ThreadLocal` 存储 `ConcurrentHashMap` 后未调用 `remove()`，在线程池复用场景下导致内存泄漏，进而引发频繁 Full GC、CPU 飙升、健康检查失败，最终被 Kubernetes 终止。
+
+
+

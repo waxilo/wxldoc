@@ -2,8 +2,6 @@
 
 [clash for windows中文版](https://github.com/Z-Siqi/Clash-for-Windows_Chinese/releases)
 
-[mac调屏幕](https://betterdisplay.pro/?from=thosefree.com) 
-
 核心推荐链接：
 
 [魔戒](https://mojie.co)

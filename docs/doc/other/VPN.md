@@ -1,8 +1,8 @@
 工具下载链接：
 
-[Download](https://zh.clashe.org/download)
-
 [clash for windows中文版](https://github.com/Z-Siqi/Clash-for-Windows_Chinese/releases)
+
+[mac调屏幕](https://betterdisplay.pro/?from=thosefree.com) 
 
 核心推荐链接：
 

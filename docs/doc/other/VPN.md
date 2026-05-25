@@ -9,3 +9,5 @@
 [云溪](https://set.acrutes.cyou/s9s2c/)
 
 [淘气兔](https://xn--mesq4iw0lg80a.com/)
+
+[良心云](https://xn--9kqz23b19z.com/#/dashboard)

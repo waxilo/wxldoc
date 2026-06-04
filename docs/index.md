@@ -6,6 +6,8 @@
 
 [mac调屏幕](https://betterdisplay.pro/?from=thosefree.com) 
 
+[Mac破解软件](https://www.digit77.com/categories/MacApps) 
+
 ## 中转站
 
 [橘子浮光](https://openclawroot.com/console)

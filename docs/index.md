@@ -8,6 +8,8 @@
 
 [Mac破解软件](https://www.digit77.com/categories/MacApps) 
 
+[数据库连接工具-DBX](https://github.com/t8y2/dbx/releases)
+
 ## 中转站
 
 [橘子浮光](https://openclawroot.com/console)

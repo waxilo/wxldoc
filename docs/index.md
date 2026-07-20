@@ -10,6 +10,10 @@
 
 [数据库连接工具-DBX](https://github.com/t8y2/dbx/releases)
 
+[免费云数据库](https://tidbcloud.com/tidbs?orgId=1372813089209346123)
+
+
+
 ## 中转站
 
 [橘子浮光](https://openclawroot.com/console)

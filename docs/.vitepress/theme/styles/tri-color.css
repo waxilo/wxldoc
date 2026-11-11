@@ -41,3 +41,11 @@ html.dark {
   --tm-ok: #97c459;
   --tm-danger-text: #f09595;
 }
+
+.tm-frame {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid var(--vp-c-border);
+  border-radius: 12px;
+  background: var(--vp-c-bg-alt);
+}

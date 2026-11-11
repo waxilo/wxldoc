@@ -80,8 +80,8 @@ function legendStyle(key) {
 </script>
 
 <template>
-  <div class="tri-mark">
-    <svg class="tri-mark__canvas" viewBox="0 0 660 320" role="img" aria-label="三色标记法的逐步过程">
+  <div class="tri-mark tm-frame">
+    <svg class="tri-mark__canvas" viewBox="0 12 660 296" role="img" aria-label="三色标记法的逐步过程">
       <defs>
         <marker
           id="tm-arrow"
@@ -161,10 +161,6 @@ function legendStyle(key) {
 </template>
 
 <style scoped>
-.tri-mark {
-  margin: 20px 0;
-}
-
 .tri-mark__canvas {
   display: block;
   width: 100%;

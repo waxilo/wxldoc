@@ -1,6 +1,6 @@
 <template>
-  <div class="lost-mark">
-    <svg viewBox="0 0 680 300" role="img" aria-label="漏标的两个必要条件与增量更新、原始快照两种解决方案">
+  <div class="lost-mark tm-frame">
+    <svg viewBox="0 42 680 260" role="img" aria-label="漏标的两个必要条件与增量更新、原始快照两种解决方案">
       <defs>
         <marker
           id="lm-arrow"
@@ -64,10 +64,6 @@
 </template>
 
 <style scoped>
-.lost-mark {
-  margin: 20px 0;
-}
-
 .lost-mark svg {
   display: block;
   width: 100%;

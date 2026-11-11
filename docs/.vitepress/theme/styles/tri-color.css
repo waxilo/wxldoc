@@ -1,0 +1,43 @@
+:root {
+  --tm-white-fill: #ffffff;
+  --tm-white-stroke: #888780;
+  --tm-white-text: #2c2c2a;
+  --tm-grey-fill: #b4b2a9;
+  --tm-grey-stroke: #5f5e5a;
+  --tm-grey-text: #2c2c2a;
+  --tm-black-fill: #2c2c2a;
+  --tm-black-stroke: #2c2c2a;
+  --tm-black-text: #ffffff;
+  --tm-dead-fill: #ffffff;
+  --tm-dead-stroke: #e24b4a;
+  --tm-dead-text: #a32d2d;
+  --tm-edge: #888780;
+  --tm-island: #d3d1c7;
+  --tm-muted: #888780;
+  --tm-surface: #f1efe8;
+  --tm-surface-stroke: #c9c6bc;
+  --tm-ok: #3b6d11;
+  --tm-danger-text: #a32d2d;
+}
+
+html.dark {
+  --tm-white-fill: #171717;
+  --tm-white-stroke: #7d7a72;
+  --tm-white-text: #d7d4cc;
+  --tm-grey-fill: #7d7a72;
+  --tm-grey-stroke: #b8b5ab;
+  --tm-grey-text: #0f0f0f;
+  --tm-black-fill: #050505;
+  --tm-black-stroke: #c8c5bb;
+  --tm-black-text: #ffffff;
+  --tm-dead-fill: #171717;
+  --tm-dead-stroke: #e24b4a;
+  --tm-dead-text: #f09595;
+  --tm-edge: #7d7a72;
+  --tm-island: #3a3a37;
+  --tm-muted: #9a978e;
+  --tm-surface: #22221f;
+  --tm-surface-stroke: #3a3a37;
+  --tm-ok: #97c459;
+  --tm-danger-text: #f09595;
+}

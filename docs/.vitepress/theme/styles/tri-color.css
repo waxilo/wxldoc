@@ -18,6 +18,55 @@
   --tm-surface-stroke: #c9c6bc;
   --tm-ok: #3b6d11;
   --tm-danger-text: #a32d2d;
+
+  /* G1 图示配色 */
+  --g1-ink: #2c2c2a;
+  --g1-ink-muted: #5f5e5a;
+  --g1-eden-fill: #e6f1fb;
+  --g1-eden-stroke: #185fa5;
+  --g1-eden-text: #185fa5;
+  --g1-survivor-fill: #b5d4f4;
+  --g1-survivor-text: #0c447c;
+  --g1-old-fill: #f1efe8;
+  --g1-old-stroke: #8a877e;
+  --g1-old-text: #5f5e5a;
+  --g1-garbage-fill: #888780;
+  --g1-garbage-stroke: #444441;
+  --g1-garbage-text: #ffffff;
+  --g1-humongous-fill: #d3d1c7;
+  --g1-humongous-text: #444441;
+  --g1-badge-fill: #ffffff;
+  --g1-badge-stroke: #2c2c2a;
+  --g1-badge-text: #2c2c2a;
+  --g1-bar-bg: #d3d1c7;
+  --g1-bar-fg: #888780;
+  --g1-stw-fill: #b5d4f4;
+  --g1-stw-stroke: #185fa5;
+  --g1-concurrent-fill: #e6f1fb;
+  --g1-concurrent-stroke: #378add;
+  --g1-fallback-fill: #f1efe8;
+  --g1-fallback-stroke: #5f5e5a;
+  --g1-arrow: #5f5e5a;
+  --g1-note-fill: #f1efe8;
+  --g1-note-stroke: #d3d1c7;
+  --g1-danger-text: #a32d2d;
+  --g1-dead-fill: #d3d1c7;
+  --g1-dead-stroke: #888780;
+  --g1-target-fill: #eaf3de;
+  --g1-target-stroke: #3b6d11;
+
+  /* 事务 ACID 图示配色 */
+  --acid-ink: #2c2c2a;
+  --acid-ink-muted: #5f5e5a;
+  --acid-card-fill: #f1efe8;
+  --acid-card-stroke: #8a877e;
+  --acid-a: #1d9e75;
+  --acid-i: #185fa5;
+  --acid-d: #7f77dd;
+  --acid-goal-fill: #eaf3de;
+  --acid-goal-stroke: #3b6d11;
+  --acid-goal-text: #27500a;
+  --acid-arrow: #5f5e5a;
 }
 
 html.dark {
@@ -40,6 +89,55 @@ html.dark {
   --tm-surface-stroke: #3a3a37;
   --tm-ok: #97c459;
   --tm-danger-text: #f09595;
+
+  /* G1 图示配色（暗色） */
+  --g1-ink: #d7d4cc;
+  --g1-ink-muted: #9a978e;
+  --g1-eden-fill: #12263a;
+  --g1-eden-stroke: #85b7eb;
+  --g1-eden-text: #b5d4f4;
+  --g1-survivor-fill: #1d4a6b;
+  --g1-survivor-text: #d7e9fb;
+  --g1-old-fill: #22221f;
+  --g1-old-stroke: #7d7a72;
+  --g1-old-text: #b8b5ab;
+  --g1-garbage-fill: #c8c5bb;
+  --g1-garbage-stroke: #e8e6df;
+  --g1-garbage-text: #0f0f0f;
+  --g1-humongous-fill: #3a3a37;
+  --g1-humongous-text: #b8b5ab;
+  --g1-badge-fill: #17171a;
+  --g1-badge-stroke: #d7d4cc;
+  --g1-badge-text: #d7d4cc;
+  --g1-bar-bg: #3a3a37;
+  --g1-bar-fg: #c8c5bb;
+  --g1-stw-fill: #1d4a6b;
+  --g1-stw-stroke: #85b7eb;
+  --g1-concurrent-fill: #12263a;
+  --g1-concurrent-stroke: #378add;
+  --g1-fallback-fill: #22221f;
+  --g1-fallback-stroke: #7d7a72;
+  --g1-arrow: #9a978e;
+  --g1-note-fill: #22221f;
+  --g1-note-stroke: #3a3a37;
+  --g1-danger-text: #f09595;
+  --g1-dead-fill: #3a3a37;
+  --g1-dead-stroke: #9a978e;
+  --g1-target-fill: #1c2b13;
+  --g1-target-stroke: #97c459;
+
+  /* 事务 ACID 图示配色（暗色） */
+  --acid-ink: #d7d4cc;
+  --acid-ink-muted: #9a978e;
+  --acid-card-fill: #22221f;
+  --acid-card-stroke: #7d7a72;
+  --acid-a: #5dcaa5;
+  --acid-i: #85b7eb;
+  --acid-d: #afa9ec;
+  --acid-goal-fill: #1c2b13;
+  --acid-goal-stroke: #97c459;
+  --acid-goal-text: #c0dd97;
+  --acid-arrow: #9a978e;
 }
 
 .tm-frame {

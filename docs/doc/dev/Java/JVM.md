@@ -222,29 +222,244 @@
 - 多线程收集
 - 目标是达到一个可控制的吞吐量（Throughput）
 - 吞吐量 = 运行用户代码时间 / (运行用户代码时间 + 垃圾收集时间)
+- 与其他收集器最大的差异：**自适应调节**（`-XX:+UseAdaptiveSizePolicy` 默认开启）。不必手工指定新生代大小、Eden/Survivor 比例、晋升年龄，JVM 会按 `-XX:MaxGCPauseMillis`（最大停顿）与 `-XX:GCTimeRatio`（吞吐量目标，默认 99，即 GC 时间占比 ≤1%）自己调整
 
 **适用场景**：
 - 注重吞吐量的后台运算任务
 
-### G1回收器（Garbage-First）
+#### JDK 8 的默认收集器
 
-**特点**：
-- 面向服务端的垃圾收集器
-- 基于 Region 的内存布局，把堆分成多个大小相等的独立区域
-- 可以建立可预测的停顿时间模型
-- 整体上看是基于标记整理的收集器，局部上看是基于复制算法
+结论：**JDK 8 在 server-class 机器上默认就用 Parallel Scavenge**，但它不是单独出战，默认是一整组：
 
-**优势**：
-- 可预测的停顿时间
-- 空间整合，不会产生碎片
-- 并行与并发
-- 分代收集
+| 区域   | 默认收集器               | GC 日志关键字       |
+| ---- | ------------------- | ------------- |
+| 新生代  | **Parallel Scavenge** | `PSYoungGen`  |
+| 老年代  | **Parallel Old**      | `ParOldGen`   |
 
-**G1 收集过程**：
+即默认等价于 `-XX:+UseParallelGC` —— 这个开关是"整组 Parallel"，不是"只开新生代 Parallel"。HotSpot 启动时按机器类型判断：
+
+| 机器类型        | 判定依据                              | 默认组合                              |
+| ----------- | --------------------------------- | --------------------------------- |
+| server-class | ≥2 个 CPU 且物理内存 ≥ 约 2GB（64 位机器基本都满足） | Parallel Scavenge + Parallel Old  |
+| client-class | 单核 / 老 32 位 Windows 等              | Serial + Serial Old（日志 `DefNew`） |
+
+所以严格的说法是：**对服务器环境成立，对单核小机器不成立**。
+
+验证方法：
+
+```bash
+# 1) 直接看默认参数，出现 -XX:+UseParallelGC 即确认
+java -XX:+PrintCommandLineFlags -version
+
+# 2) 运行中的进程
+jinfo -flag UseParallelGC <pid>
+
+# 3) 最靠谱：看 GC 日志里的分代名字
+java -XX:+PrintGCDetails -XX:+PrintGCDateStamps -jar app.jar
+# PSYoungGen / ParOldGen → Parallel 组合
+# DefNew → Serial；ParNew → CMS 的年轻代
+```
+
+**三个易错点**：
+
+1. **Parallel Scavenge ≠ ParNew。** 两者都是多线程复制算法，但 Parallel Scavenge 独有上面那套自适应策略；ParNew 只是 Serial 的多线程版本，没有自适应能力。
+2. **换成 CMS，新生代就不再是 Parallel Scavenge。** `-XX:+UseConcMarkSweepGC` 只配 **ParNew** —— Parallel Scavenge 与 CMS 的框架不兼容，二者无法组合。
+3. **容器里判定可能失真。** JDK 8u191 之前不识别容器的 CPU / 内存限制，按宿主机核数判定 server-class，于是"1 核 Pod 里跑 Parallel"很常见；8u191+ 才修复，或显式加 `-XX:ActiveProcessorCount=1`、`-XX:+UseSerialGC` 收口。
+
+### G1 回收器（Garbage-First）
+
+**一句话理解**：把堆切成等大的 Region，按"垃圾率"排序挑着收；回收时把存活对象疏散到空闲 Region，源 Region 整块归还。
+
+| 属性    | 说明                                                  |
+| ----- | --------------------------------------------------- |
+| 定位    | 面向服务端、大堆（4GB+）、停顿可预测                                |
+| 默认    | JDK 9 起默认收集器（JDK 8 需 `-XX:+UseG1GC` 手动开启）            |
+| 布局    | Region 化：新生代 / 老年代不再物理连续                            |
+| 停顿模型  | `-XX:MaxGCPauseMillis` 给软目标，按预算分批收，收不完留到下一轮           |
+| 算法归属  | 标记 = 并发标记（SATB）；回收 = 疏散复制；整体效果等价于标记-整理               |
+
+下面按「怎么划分 → 怎么挑 → 怎么收 → 算法细节 → 特殊对象 → 优劣 → 怎么调」展开。
+
+#### 堆布局：等大 Region，角色可变
+
+<G1RegionHeap />
+
+- 堆被切成约 2048 个等大 Region（1–32MB，随堆大小自适应），每个 Region 可担当 Eden / Survivor / Old / Free
+- **角色不固定**：同一个 Region 这一轮是 Eden，回收后可能变成 Old 或 Free
+- **普通对象不要求跨 Region 连续**，因此不存在 CMS 那种"总空间够、却找不到连续空间"的尴尬（**Humongous 是例外**，见后文）
+- 图中的 `H` 是 Humongous Region，同样计入老年代
+
+上图左侧是堆的布局，右侧那列"按垃圾率排出的顺序"属于挑选策略，见下一节。
+
+#### 回收策略：垃圾优先（Garbage-First）
+
+名字里的 Garbage-First 说的就是挑选策略：**不按分代顺序整段回收，而是按"垃圾率"排序，先收最划算的 Region**。
+
+- 每次 GC 参与的 Region 集合叫 **CSet（Collection Set）**：Young GC 只含 Eden + Survivor；Mixed GC 额外加入若干垃圾率高的 Old Region
+- 挑选依据是 Region 的**存活率**：存活率高于 `-XX:G1MixedGCLiveThresholdPercent`（默认 85%）的 Old Region 不进候选
+- 预算用满就停手，收不完的留到下一轮 —— 这就是"可预测停顿"的实现方式
+
+> 直接效果：回收不必等整个老年代攒满，挑出垃圾率最高的几个 Region 就能开工。
+
+#### 回收周期
+
+<G1Cycle />
+
+G1 日常只有三种 GC 在跑，先厘清分工：
+
+| GC 类型     | 收什么                              | 频率与代价                |
+| --------- | -------------------------------- | -------------------- |
+| Young GC  | 只收 Eden + Survivor               | 最频繁，STW 但很短          |
+| Mixed GC  | Young + 若干垃圾率高的 Old Region       | 并发标记完成后连续跑几轮，STW     |
+| Full GC   | 整个堆，兜底                           | 尽量避免，代价最大            |
+
+当堆占用超过 `InitiatingHeapOccupancyPercent`（默认 45）会触发一次**并发标记周期**，上图就是它的四个阶段：
+
 1. 初始标记（Initial Marking）：STW，标记 GC Roots 能直接关联到的对象
-2. 并发标记（Concurrent Marking）：与用户线程并发执行
+2. 并发标记（Concurrent Marking）：与用户线程并发执行，全程用 SATB 记录引用变动
 3. 最终标记（Final Marking）：STW，修正并发标记期间因用户程序继续运作而产生变动的那一部分标记记录
-4. 筛选回收（Live Data Counting and Evacuation）：STW，根据用户期望的停顿时间来制定回收计划
+4. 筛选回收（Live Data Counting and Evacuation）：STW，按停顿预算挑选 Region，把存活对象疏散走（算法见下一节）
+
+> `-XX:MaxGCPauseMillis` 是**软目标**而不是承诺：收不完就留到下一轮，停顿有上限，代价是"垃圾债"会累积 —— 债攒太多就会退化成 Full GC。
+
+#### 回收算法：疏散复制（Evacuation），不是"两块空间对拷"
+
+<G1Evacuation />
+
+常听到的说法是"G1 局部用复制算法"，很容易被理解成**两个等大 Region 互相对拷**。实际不是——Oracle 对 G1 的定义里关键词是 **evacuating collector**（疏散式收集器）：从选中的 Region 里把存活对象"疏散"到别处。各阶段对应的算法：
+
+| 阶段              | 实际算法                                  | 说明                        |
+| --------------- | ------------------------------------- | ------------------------- |
+| 并发标记            | 三色标记 + SATB 写屏障                       | 只标记，不搬对象                  |
+| 回收（Evacuation）  | 复制式压缩：复制到空闲 Region，bump pointer 紧凑填充 | "复制"只发生在这里                |
+| Full GC（兜底）     | 标记-整理（sliding compaction）             | JDK 8 单线程；JDK 10（JEP 307）起并行 |
+
+##### 与经典复制算法的区别
+
+| 维度      | 传统复制（Serial / Parallel 新生代）      | G1 的 Evacuation          |
+| ------- | ------------------------------ | ------------------------ |
+| 空间结构    | from / to 两块等大                 | Collection Set（N 个）→ 空闲 Region 池（M 个） |
+| 数量关系    | 1 : 1 固定配对                     | N : M 动态，M 通常远小于 N       |
+| 是否预留    | 必须预留整块 to-space（浪费一半）         | 不预留，从空闲链表按需取，用完即止        |
+| 复制单位    | 整个幸存区搬空                        | 只搬 CSet 中的**存活对象**，死对象原地丢弃 |
+| 源是否连续   | 是（一整块连续空间）                     | 否，CSet 里的 Region 可分散在堆各处 |
+| 收尾      | 清理 from 空间                     | 源 Region 直接整体变 Free，**没有 sweep** |
+
+两个要点：
+
+- **Region 不是复制单位，对象才是。** 一个源 Region 的存活对象可能被拆到多个目标 Region；一个目标 Region 里的对象也可能来自多个源 Region。
+- **无碎片的真正来源**：幸存对象用 bump pointer 顺序填充进目标 Region，天然紧凑，不需要额外的压缩阶段。
+
+##### 几个易错细节
+
+1. **CSet 里混着什么**：Young GC 只含 Eden + Survivor Region；Mixed GC 额外加入若干垃圾率高的 Old Region，它们被统一当作"源"处理。
+2. **PLAB**：每个 GC 线程从目标 Region 预切一块本地缓冲（Promotion Local Allocation Buffer），在本地顺序分配，减少多线程碰撞 bump pointer 的竞争；用尽再申请。
+3. **RSet 在这里的作用**：复制时要更新所有指向被搬对象的引用。没有 RSet 就得全堆扫描找引用；有 RSet（记录"谁引用了我这个 Region"）只需扫相关卡页——这是 G1 用内存与写屏障开销换停顿的典型设计。
+4. **Survivor 不是"两个区互拷"**：G1 的 Survivor 是"若干 Region 承担 Survivor 角色"，每次 Young GC 后换成新的一批，年龄达 `MaxTenuringThreshold` 的对象直接晋升到 Old Region。
+5. **复制失败**：目标空闲 Region 不够（日志里的 `to-space exhausted` / evacuation failure）时，G1 中止本次疏散、部分对象留在原地，随后大概率退化 Full GC。`-XX:G1ReservePercent`（默认 10）就是给这种时刻留的余量。
+
+一句话：**一个源 Region 对多个目标 Region，多个源 Region 对一个目标 Region；按对象级复制、紧凑填充，源 Region 整块归还——而不是两个 Region 对拷。**
+
+#### Humongous 大对象：不支持拆分分配
+
+判定标准：`size ≥ RegionSize / 2` 即 Humongous 对象，跳过 Eden / Survivor，直接分配进老年代。
+
+这和上一节"目标 Region 必须连续"是同一个约束的两面：**疏散复制要求目标连续，Humongous 则把这条约束压到单个对象身上**。
+
+<G1Humongous />
+
+**结论：G1 不会把一个大对象拆到多个不连续的 Region 上。** 这个"不支持"有两层，且两层都不能通融：
+
+1. **语义层不可能**：Java 对象在堆上必须是单块连续内存，字段与数组元素都靠「对象头 + 固定偏移」寻址，GC 也以对象整体为单位扫描和复制。跨不连续内存的"碎片化对象"在 HotSpot 里根本不存在。
+2. **实现层不允许**：Humongous 只能占用**一组连续的 Region**，首个标记 `startsHumongous`、后续标记 `continuesHumongous`，对象起点**必须落在首个 Region 的起点**（不能从 Region 中间起步）。
+
+官方调优指南（JDK 11 / 17 / 18 表述一致）：
+
+> Every humongous object gets allocated as a sequence of contiguous regions. The start of the object itself is always located at the start of the first region in that sequence. **Any leftover space in the last region of the sequence will be lost for allocation until the entire object is reclaimed.**
+
+翻成能落地的两句话：
+
+- 对象大小为 N 个 Region（非整数）→ 实际占 `ceil(N)` 个连续 Region；
+- **最后一个 Region 的剩余空间，在整个对象被回收前，任何对象都不能用**。
+
+##### 为什么是高频坑
+
+最典型的是 payload 为 2 的幂的缓冲区：Region = 4MB 时，`byte[4MB]` 加上数组对象头刚好越界 → 占 2 个 Region，利用率直接腰斩。这类对象一多，Region 占用虚高、并发周期被反复触发，但 Mixed GC 又收不出多少空间，日志里 `Humongous regions` 与 `G1 Humongous Allocation` 会高频出现。
+
+更麻烦的是**区域级碎片**：Humongous 需要的是一段连续空闲 Region，而堆里可能"总量够、连续不够"，此时分配会直接触发 Full GC。
+
+##### 版本演进（改进方向都不是"拆分"）
+
+| 版本        | 变化                                                          | 与"拆分分配"的关系                 |
+| --------- | ----------------------------------------------------------- | --------------------------- |
+| JDK 8u40+ | `-XX:+G1EagerReclaimHumongousObjects`（默认开）：原始类型数组在任意 GC 暂停中若无引用即立即回收 | 只是更早**整体**回收，不是拆开用          |
+| JDK 18    | Region 上限从 32MB 提到 512MB（JDK-8275056）                       | 让原本的大对象**不再是** Humongous，绕开问题 |
+| JDK 21    | 兜底 Full GC（last-ditch）允许**移动** Humongous 对象（JDK-8191565）    | 缓解"有空间但无连续空间"的 OOME         |
+
+> 注意："Humongous 对象永不移动"在 JDK 20 及以前是铁律，**JDK 21 起仅在最后一次兜底 Full GC 中破例**。别用老结论去解释新版本的 GC 日志。
+
+##### 排查与调优
+
+```bash
+# 1) 确认是否真的在产生 Humongous（JDK 9+ 统一日志）
+-Xlog:gc+heap=info        # 输出 "Humongous regions: N -> M"
+-Xlog:gc+alloc=debug      # 输出 "G1 Humongous Allocation (region size ..., allocation size ...)"
+# JDK 8 用 -XX:+PrintGCDetails -XX:+PrintGCDateStamps
+
+# 2) 缓解手段之一：调大 Region，让大对象降级成普通对象
+-XX:G1HeapRegionSize=16m  # 2 的幂，1~32MB（JDK 18+ 上限提到 512MB）
+```
+
+取舍：
+
+- **调大 Region** 最直接，但 Region 变大 → 回收粒度变粗、RSet 内存与写屏障开销上升、Region 总数减少，可能换来更长的停顿。不要无脑调。
+- **改代码**更根治：避免 2 的幂长度的容器（倍增扩容容易正好踩线）、大 JSON / 大文件用流式解析代替整包转 List。
+- **判断依据**：Full GC 频繁但堆里明显还有空闲 → 优先怀疑 Region 级碎片，而不是对象真的存活太多。
+
+#### 优势与代价
+
+**好处**（对照 Parallel / CMS）：
+
+| 优点          | 具体表现                                        | 对照 Parallel / CMS          |
+| ----------- | ------------------------------------------- | -------------------------- |
+| 停顿可预测       | `-XX:MaxGCPauseMillis` 给一个软目标，按预算分批收，停顿不随堆变大而线性膨胀 | Parallel 整体 STW，堆越大停顿越久    |
+| 无碎片、自带压缩    | 疏散复制：对象级复制到空闲 Region 并紧凑填充，源 Region 整块回收 | CMS 标记-清除，碎片多了只能退化 Full GC |
+| 大堆更稳        | 生产上 4–32GB（甚至更大）是 G1 的主场，堆越大优势越明显           | Parallel 在 16GB+ 上停顿常达秒级   |
+| 并行 + 并发     | STW 内多核并行复制；标记阶段与应用线程并发（SATB 写屏障）           | Serial 单线程；Parallel 无并发阶段  |
+| 只回收"划算的部分"  | Mixed GC 只收垃圾率高的 Old Region，不是全扫            | Parallel Old 全量回收         |
+| 调优面向目标      | 主要三四个参数，属于"声明目标"式调优                         | CMS 参数多、耦合强，容易调崩           |
+
+**代价**（同时也是它不适用的场景）：
+
+1. **RSet 与写屏障开销**：每个 Region 都要维护"谁引用了我"的记忆集，引用密集的应用会掉 5–10% 吞吐。**堆小于 4G 且只追求吞吐的小服务，Parallel 反而更快。**
+2. **版本要挑**：JDK 8 需手动 `-XX:+UseG1GC`，且 8u191 之前对容器资源不敏感、Humongous 分配也粗糙 —— **要上生产建议 8u202+，或直接用 JDK 11/17**。
+3. **Full GC 是兜底，代价很大**：JDK 8 退化为串行标记-压缩，几 GB 的堆能卡几秒（日志常伴 `to-space exhausted`），JDK 10 起才并行化。G1 的关键不是"理论上避免 Full GC"，而是**把 IHOP 调对，别让它发生**。
+
+> 选型一句话：**堆 < 4G 且只追求吞吐 → Parallel；堆 4G+ 且对延迟敏感 → G1；还在用 CMS 的 → 直接迁 G1。**
+
+#### 关键参数
+
+```bash
+# 开关：JDK 8 必须手动开启，JDK 9+ 默认
+-XX:+UseG1GC
+
+# 停顿目标与并发标记触发
+-XX:MaxGCPauseMillis=200              # 停顿软目标（默认 200ms）
+-XX:InitiatingHeapOccupancyPercent=45 # 触发并发标记的堆占用比（默认 45，最常调）
+
+# 分区与新生代
+-XX:G1HeapRegionSize=16m              # Region 大小，1~32MB 的 2 的幂
+-XX:G1NewSizePercent=5                # 新生代下限
+-XX:G1MaxNewSizePercent=60            # 新生代上限
+-XX:G1ReservePercent=10               # 预留空间，缓解 to-space exhausted
+
+# Mixed GC 的挑选条件
+-XX:G1MixedGCLiveThresholdPercent=85  # 存活率超 85% 的 Region 不进候选
+-XX:G1HeapWastePercent=5              # 可容忍垃圾占比，低于它不启动 Mixed 阶段
+
+# 其他
+-XX:+ParallelRefProcEnabled           # 引用处理并行化，弱引用/软引用多时必备
+```
 
 ### 其他组合
 

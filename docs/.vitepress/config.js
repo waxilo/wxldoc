@@ -60,9 +60,9 @@ export default {
           collapsed: true,
 
           items: [
+            { text: "事务", link: "/doc/dev/MySQL/事务" },
             { text: "三大日志", link: "/doc/dev/MySQL/三大日志" },
             { text: "索引", link: "/doc/dev/MySQL/索引" },
-            { text: "事务", link: "/doc/dev/MySQL/事务" },
             { text: "锁机制", link: "/doc/dev/MySQL/锁" },
             { text: "MVCC", link: "/doc/dev/MySQL/MVCC" },
             { text: "慢SQL优化", link: "/doc/dev/MySQL/慢SQL优化" },
